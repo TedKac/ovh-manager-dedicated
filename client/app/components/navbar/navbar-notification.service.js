@@ -1,7 +1,7 @@
 class NavbarNotificationService {
   constructor(
     $interval, $q, $translate,
-    Alerter, atInternet, constants, OvhApiNotificationAapi,
+    Alerter, atInternet, constants, navbar, OvhApiNotificationAapi,
     UNIVERSE,
   ) {
     this.$interval = $interval;
@@ -10,6 +10,7 @@ class NavbarNotificationService {
     this.alerter = Alerter;
     this.atInternet = atInternet;
     this.constants = constants;
+    this.navbar = navbar;
     this.OvhApiNotificationAapi = OvhApiNotificationAapi;
     this.UNIVERSE = UNIVERSE;
 
@@ -88,12 +89,23 @@ class NavbarNotificationService {
     }, this.NOTIFICATION_REFRESH_TIME);
   }
 
-  getNavbarContent() {
+  getNavbarContent({ ovhSubsidiary: subsidiary }) {
+    const useNewText = ['FR'].includes(subsidiary);
+
+    const title = useNewText
+      ? this.navbar.constructor.buildMenuHeader(this.$translate.instant('common_navbar_notification_title_new'))
+      : this.$translate.instant('common_navbar_notification_title');
+
+    const headerTitle = useNewText
+      ? this.$translate.instant('common_navbar_notification_title_new')
+      : title;
+
     return this.getSubLinks().then((sublinks) => {
       this.setRefreshTime(sublinks);
       const navbarContent = {
         name: 'notifications',
-        title: this.$translate.instant('common_navbar_notification_title'),
+        title,
+        headerTitle,
         iconClass: 'icon-notifications',
         iconAnimated: this.constructor.shouldAnimateIcon(sublinks),
         limitTo: 10,

@@ -7,6 +7,7 @@ class SessionService {
     CdnDomain,
     DedicatedCloud,
     Nas,
+    navbar,
     NavbarNotificationService,
     Products,
     User,
@@ -22,6 +23,7 @@ class SessionService {
     this.cdnDomain = CdnDomain;
     this.dedicatedCloud = DedicatedCloud;
     this.nas = Nas;
+    this.navbar = navbar;
     this.navbarNotificationService = NavbarNotificationService;
     this.products = Products;
     this.user = User;
@@ -339,9 +341,20 @@ class SessionService {
       });
     }
 
+    const useNewText = ['FR'].includes(currentUser.ovhSubsidiary);
+
+    const title = useNewText
+      ? this.navbar.constructor.buildMenuHeader(this.$translate.instant('otrs_menu_assistance_new'))
+      : this.$translate.instant('otrs_menu_assistance');
+
+    const headerTitle = useNewText
+      ? this.$translate.instant('otrs_menu_assistance_new')
+      : title;
+
     return {
       name: 'assistance',
-      title: this.$translate.instant('otrs_menu_assistance'),
+      title,
+      headerTitle,
       iconClass: 'icon-assistance',
       onClick: () => this.atInternet.trackClick({
         name: 'assistance',
@@ -392,9 +405,19 @@ class SessionService {
   }
 
   getUserMenu(currentUser) {
+    const useNewText = ['FR'].includes(currentUser.ovhSubsidiary);
+
+    const title = useNewText
+      ? this.navbar.constructor.buildMenuHeader(`
+        ${this.$translate.instant('otrs_menu_userAccount_1', { username: currentUser.firstName })}
+        <br>
+        ${this.$translate.instant('otrs_menu_userAccount_2')}
+      `)
+      : currentUser.firstName;
+
     return {
       name: 'user',
-      title: currentUser.firstName,
+      title,
       iconClass: 'icon-user',
       nichandle: currentUser.nichandle,
       fullName: `${currentUser.firstName} ${currentUser.lastName}`,
@@ -599,12 +622,10 @@ class SessionService {
       return baseNavbar;
     };
 
-    return this.$q.all({
-      translate: this.loadTranslations(),
-      user: this.user.getUser(),
-      notifications: this.navbarNotificationService.getNavbarContent(),
-    })
-      .then(({ user, notifications }) => getBaseNavbar(user, notifications))
+    return this.loadTranslations()
+      .then(() => this.user.getUser())
+      .then(user => this.navbarNotificationService.getNavbarContent(user)
+        .then(notifications => getBaseNavbar(user, notifications)))
       .catch(() => getBaseNavbar());
   }
 }
